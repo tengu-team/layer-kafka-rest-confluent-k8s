@@ -1,0 +1,16 @@
+name: kafka-rest-confluent-k8s
+summary: Kafka REST confluent
+maintainer: Sander Borny <sander.borny@ugent.be>
+description: |
+  Kafka REST confluent
+tags:
+  - misc
+subordinate: false
+provides:
+  upstream:
+    interface: upstream
+requires:
+  kafka:
+    interface: kafka
+  kubernetes:
+    interface: kubernetes-deployer

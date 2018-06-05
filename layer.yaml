@@ -1,0 +1,5 @@
+includes: ['layer:basic',
+           'interface:kafka',
+           'interface:upstream',
+           'interface:kubernetes-deployer']
+repo: https://github.com/tengu-team/layer-kafka-rest-confluent-k8s.git
