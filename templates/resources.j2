@@ -54,3 +54,9 @@ spec:
           envFrom:
           - configMapRef:
               name: {{configmap_name}}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{port}}
+            initialDelaySeconds: 3
+            periodSeconds: 10

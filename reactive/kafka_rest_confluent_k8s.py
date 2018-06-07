@@ -224,6 +224,7 @@ def configure_upstream():
 
 
 @when('upstream.configured')
-@when_not('endpoint.upstream.available')
+@when_not_all('endpoint.upstream.available',
+              'endpoint.kubernetes.available')
 def reset_upstream():
     clear_flag('upstream.configured')
