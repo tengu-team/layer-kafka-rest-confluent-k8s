@@ -109,6 +109,7 @@ def request_rest_setup():
         'KAFKA_REST_BOOTSTRAP_SERVERS': ','.join(kafka_brokers),
         'KAFKA_REST_LISTENERS': "http://0.0.0.0:8082",
         'KAFKA_REST_HOST_NAME': 'localhost',
+        'KAFKA_REST_LOG4J_ROOT_LOGLEVEL': 'WARN',
     }    
 
     resource_context = {
