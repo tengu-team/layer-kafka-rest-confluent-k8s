@@ -6,6 +6,7 @@ from charms.reactive import (
     set_flag,
     clear_flag,
     when,
+    when_any,
     when_not,
     when_not_all,
     endpoint_from_flag,
@@ -62,8 +63,9 @@ def wait_pods_config():
     status_set('blocked', 'Waiting for pods config')
 
 
-@when('config.changed.pods')
-def pods_config_changed():
+@when_any('config.changed.pods',
+          'config.changed.autoscale')
+def config_changed():
     reset_k8s_flags()
 
 
@@ -127,6 +129,13 @@ def request_rest_setup():
         'image': 'confluentinc/cp-kafka-rest:3.1.0',
     }
 
+    autoscale = conf.get('autoscale', None)
+    if autoscale:
+        min, max = autoscale.split(',')
+        resource_context['autoscale'] = True
+        resource_context['autoscale_min'] = min
+        resource_context['autoscale_max'] = max
+
     render(source='resources.j2',
            target='/etc/kafka-rest/{}.yaml'.format(juju_app_name),
            context=resource_context)
@@ -145,18 +154,33 @@ def request_rest_setup():
 def kubernetes_status():
     status_set('waiting', 'Waiting on k8s deployment')
     k8s = endpoint_from_flag('endpoint.kubernetes.new-status')
-    k8s_status = k8s.get_status()
+    k8s_status = k8s.get_status()    
     if not k8s_status or 'status' not in k8s_status:
         return    
-    # Check if pods are ready
-    replicas = conf.get('pods')
-    for resource in k8s_status['status']:
-        if resource['kind'] == "Deployment":
-            if ('readyReplicas' not in resource['status'] 
-                or resource['status']['readyReplicas'] != replicas):
-                return
+    # Check if pods are ready by counting the number of ready pods
+    min_replicas = conf.get('pods')
+    max_replicas = min_replicas
+    autoscale = conf.get("autoscale", None)
+    if autoscale:
+        min_replicas, max_replicas = autoscale.split(',')
+    try:
+        for resource in k8s_status['status']:
+            if resource['kind'] == "Deployment":
+                # Check the if readyReplicas is set, if yes check if 
+                # we meet the required amount of replicas
+                if ('readyReplicas' not in resource['status']
+                        or not int(min_replicas) <=
+                        resource['status']['readyReplicas'] <=
+                        int(max_replicas)):
+                    return
+    except KeyError as e:
+        log(e)
+        log("Unexpected kubernetes-deployer response:")
+        log(k8s_status)
+        status_set('blocked', "Unexpected deployer status response")
+        return
     status_set('active', 'ready')
-    clear_flag('endpoint.kubernetes.new-status')
+    clear_flag('endpoint.kubernetes.new-status') 
     set_flag('kafka-rest.running')
 
 
@@ -228,4 +252,7 @@ def configure_upstream():
 @when_not_all('endpoint.upstream.available',
               'endpoint.kubernetes.available')
 def reset_upstream():
+    reverse_proxy = endpoint_from_flag('endpoint.upstream.available')
+    if reverse_proxy:
+        reverse_proxy.clear_all_configs()
     clear_flag('upstream.configured')

@@ -16,11 +16,14 @@ juju add-relation kafka-rest nginx-api-gateway
 
 # Add / remove rest instances
 juju config kafka-rest "pods=3"
+# Or configure the autoscaler
+juju config kafka-rest "autoscale=2,5"
 ```
 
 ## Caveats
 
 - This charm should only be used for producing data to Kafka. Creating consumers will return a wrong baseline url and require sticky sessions if #pods > 1.
+- Autoscale will trigger at 50% CPU utilization. The pod itself requests 1000m CPU.
 
 ## Authors
 

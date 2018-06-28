@@ -4,3 +4,8 @@ options:
     default: 1
     description: |
       Number of Kubernetes pods.
+  autoscale:
+    type: string
+    default: ""
+    description: |
+      Interval(comma seperated) with min,max scalable pods. Based on CPU utilization. Leave empty to disable autoscaling. Ex.: 2,8 = mim 2, max 8 pods.
