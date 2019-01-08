@@ -84,7 +84,8 @@ def remove_request_state():
 @when('endpoint.kubernetes.available',
       'config.set.pods',
       'kafka.ready')
-@when_not('kafka-rest.requested')
+@when_not('kafka-rest.requested',
+          'kafka-rest.running')
 def request_rest_setup():
     """
     Request the creation of kafka-rest resources via the 
@@ -150,10 +151,10 @@ def request_rest_setup():
 
 
 @when('kafka-rest.requested',
-      'endpoint.kubernetes.new-status')
+      'endpoint.kubernetes.joined')
 def kubernetes_status():
     status_set('waiting', 'Waiting on k8s deployment')
-    k8s = endpoint_from_flag('endpoint.kubernetes.new-status')
+    k8s = endpoint_from_flag('endpoint.kubernetes.joined')
     k8s_status = k8s.get_status()    
     if not k8s_status or 'status' not in k8s_status:
         return    
@@ -180,7 +181,8 @@ def kubernetes_status():
         status_set('blocked', "Unexpected deployer status response")
         return
     status_set('active', 'ready')
-    clear_flag('endpoint.kubernetes.new-status') 
+    # clear_flag('endpoint.kubernetes.new-status') 
+    clear_flag('kafka-rest.requested')
     set_flag('kafka-rest.running')
 
 

@@ -64,8 +64,8 @@ spec:
             httpGet:
               path: /
               port: {{port}}
-              initialDelaySeconds: 5
-              periodSeconds: 30
+            initialDelaySeconds: 30
+            periodSeconds: 30
           resources:
             requests:
               cpu: 1000m
